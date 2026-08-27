@@ -19,7 +19,7 @@ test("lock inspection rejects unexpected install scripts and missing integrity",
   assert.match(result.failures[1], /integrity/);
 });
 
-test("default lock allowlist permits fsevents install script", () => {
+test("version-pinned lock exception permits only the reviewed fsevents version", () => {
   const lock = {
     packages: {
       "": {},
@@ -31,5 +31,13 @@ test("default lock allowlist permits fsevents install script", () => {
       },
     },
   };
-  assert.deepEqual(inspectLock(lock, structuredClone(DEFAULT_POLICY)).failures, []);
+  const policy = structuredClone(DEFAULT_POLICY);
+  policy.allowInstallScripts.fsevents = {
+    versions: ["2.3.3"],
+    reason: "Reviewed optional native filesystem watcher install script.",
+    expiresAt: "2027-01-01T00:00:00Z",
+  };
+  assert.deepEqual(inspectLock(lock, policy, Date.parse("2026-01-01T00:00:00Z")).failures, []);
+  lock.packages["node_modules/fsevents"].version = "2.3.4";
+  assert.match(inspectLock(lock, policy, Date.parse("2026-01-01T00:00:00Z")).failures[0], /2\.3\.4/);
 });

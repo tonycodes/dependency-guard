@@ -53,6 +53,26 @@ test("check records npm pack size violations without installing", async () => {
   assert.equal(report.commands.length, 1);
 });
 
+test("check applies an archive override only to its reviewed package version", async () => {
+  const directory = await makeProject();
+  const document = packageDocument();
+  const gitHead = document.versions["1.2.3"].gitHead;
+  const policy = { ...structuredClone(DEFAULT_POLICY), maxTarballSizeBytes: 10 };
+  policy.archiveSizeExceptions.alpha = {
+    version: "1.2.3",
+    maxTarballSizeBytes: 100,
+    reason: "Reviewed archive is larger than the default project limit.",
+    expiresAt: "2025-02-01T00:00:00Z",
+  };
+  const report = await checkProject({ path: directory, report: join(directory, "report.json"), policy, skipInstall: true }, {
+    fetch: async () => jsonResponse(document),
+    remoteRefs: async () => [{ sha: gitHead, ref: "refs/tags/v1.2.3" }],
+    run: passingRun(),
+    now: () => Date.parse("2025-01-01T00:00:00Z"),
+  });
+  assert.equal(report.status, "pass");
+});
+
 test("check parses full npm pack JSON while truncating report evidence", async () => {
   const directory = await makeProject();
   const reportPath = join(directory, "report.json");

@@ -95,8 +95,15 @@ runner without placing them in the policy or report.
 
 ```json
 {
-  "allowInstallScripts": ["fsevents"],
-  "allowDirectLifecycleScripts": [],
+  "allowInstallScripts": {
+    "fsevents": {
+      "versions": ["2.3.3"],
+      "reason": "Reviewed optional native filesystem watcher install script.",
+      "expiresAt": "2027-01-01T00:00:00Z"
+    }
+  },
+  "allowDirectLifecycleScripts": {},
+  "archiveSizeExceptions": {},
   "sourceEvidenceExceptions": {},
   "trustedRepositories": {
     "example-package": "https://github.com/example/example-package"
@@ -111,10 +118,11 @@ runner without placing them in the policy or report.
 }
 ```
 
-- `allowInstallScripts` permits `hasInstallScript` on any matching lock entry. The
-  default contains only `fsevents`.
-- `allowDirectLifecycleScripts` separately permits direct packages whose registry
-  manifest declares `preinstall`, `install`, or `postinstall`.
+- `allowInstallScripts` permits `hasInstallScript` only for listed exact versions.
+- `allowDirectLifecycleScripts` separately permits exact direct package versions
+  whose registry manifest declares `preinstall`, `install`, or `postinstall`.
+- `archiveSizeExceptions` permits exact package versions to use reviewed archive
+  limits above the project defaults.
 - `sourceEvidenceExceptions` permits only an exact package version to proceed when
   source provenance or tag evidence is unavailable. Each entry requires a detailed
   `reason` and an `expiresAt` ISO date, and produces a warning.
@@ -129,7 +137,8 @@ Unknown policy fields and malformed values fail closed.
 
 ## Exceptions
 
-Treat allowlists as reviewed security exceptions:
+Treat exception maps as reviewed security exceptions. Lifecycle and archive entries
+require exact versions, a detailed reason, and an expiry:
 
 1. Confirm the exact package and locked version.
 2. Inspect the lifecycle script and every executable or downloaded artifact it uses.
@@ -138,10 +147,10 @@ Treat allowlists as reviewed security exceptions:
 5. Record the rationale and reviewer beside the policy change in the pull request.
 6. Remove the exception when the package or dependency is removed.
 
-Do not add a package to both lifecycle allowlists automatically. A transitive
+Do not add a package to both lifecycle exception maps automatically. A transitive
 `hasInstallScript` exception and a direct manifest-hook exception represent separate
 trust decisions. Scripts remain disabled during the guard's own `npm ci`; an
-allowlist permits review to pass but does not execute the script.
+exception permits review to pass but does not execute the script.
 
 ## Evidence report
 

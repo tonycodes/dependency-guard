@@ -115,6 +115,26 @@ test("rejects direct lifecycle scripts and untrusted maintainers", async () => {
   assert.ok(result.failures.some((message) => message.includes("registry maintainer set changed")));
 });
 
+test("permits a direct lifecycle script only for the reviewed version", async () => {
+  const document = packageDocument({ version: { scripts: { postinstall: "node setup.js" } } });
+  const policy = structuredClone(DEFAULT_POLICY);
+  policy.allowDirectLifecycleScripts.alpha = {
+    versions: ["1.2.3"],
+    reason: "Reviewed package setup script required by this exact release.",
+    expiresAt: "2025-02-01T00:00:00Z",
+  };
+  const dependencies = {
+    remoteRefs: async () => [{ sha: document.versions["1.2.3"].gitHead, ref: "refs/tags/v1.2.3" }],
+    now,
+    timeoutMs: 100,
+  };
+  const accepted = await verifyDirectPackage(item, document, policy, dependencies);
+  assert.ok(!accepted.failures.some((message) => message.includes("lifecycle hook")));
+  policy.allowDirectLifecycleScripts.alpha.versions = ["1.2.2"];
+  const rejected = await verifyDirectPackage(item, document, policy, dependencies);
+  assert.ok(rejected.failures.some((message) => message.includes("lifecycle hook")));
+});
+
 test("rejects a missing previously trusted maintainer", async () => {
   const document = packageDocument({ version: { maintainers: [{ name: "alice" }] } });
   const policy = structuredClone(DEFAULT_POLICY);

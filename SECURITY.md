@@ -32,8 +32,8 @@ Node.js 20 and newer are required.
 - Do not write credentials, authorization headers, environment contents, metadata
   response bodies, or attestation bundles to reports.
 - Do not weaken repository, commit, tag, signature, integrity, or lifecycle checks to
-  accommodate a package. Require an explicit, reviewed policy exception where one is
-  supported.
+  accommodate a package. Require an explicit, version-pinned, expiring policy
+  exception where one is supported.
 
 ## Disclosure
 
