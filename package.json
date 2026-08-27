@@ -1,0 +1,17 @@
+{
+  "name": "dependency-guard",
+  "version": "0.1.0",
+  "description": "Pre-install supply-chain checks for npm projects",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "dependency-guard": "bin/dependency-guard.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check bin/dependency-guard.js && node --check lib/*.js && node --test test/*.test.js"
+  },
+  "license": "MIT"
+}
