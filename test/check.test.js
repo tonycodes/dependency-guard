@@ -102,3 +102,32 @@ test("check parses full npm pack JSON while truncating report evidence", async (
   assert.equal(report.packages[0].tarballSizeBytes, 100);
   assert.equal(report.commands[0].stdout.length, 20_000);
 });
+
+test("check accepts only explicitly reviewed npm audit advisories", async () => {
+  const directory = await makeProject();
+  const document = packageDocument();
+  const gitHead = document.versions["1.2.3"].gitHead;
+  const policy = structuredClone(DEFAULT_POLICY);
+  policy.auditExceptions["GHSA-1234-5678-9ABC"] = {
+    reason: "Reviewed existing advisory pending a separately tracked upgrade.",
+    expiresAt: "2025-02-01T00:00:00Z",
+  };
+  const run = async (_command, args) => {
+    if (args[0] === "pack") return { code: 0, stdout: JSON.stringify([{ size: 100, unpackedSize: 500 }]), stderr: "", timedOut: false };
+    if (args.includes("--json")) return {
+      code: 1,
+      stdout: JSON.stringify({ vulnerabilities: { alpha: { via: [{ url: "https://github.com/advisories/GHSA-1234-5678-9abc" }] } } }),
+      stderr: "",
+      timedOut: false,
+    };
+    return { code: 0, stdout: "ok", stderr: "", timedOut: false };
+  };
+  const report = await checkProject({ path: directory, report: join(directory, "report.json"), policy }, {
+    fetch: async () => jsonResponse(document),
+    remoteRefs: async () => [{ sha: gitHead, ref: "refs/tags/v1.2.3" }],
+    run,
+    now: () => Date.parse("2025-01-01T00:00:00Z"),
+  });
+  assert.equal(report.status, "pass");
+  assert.ok(report.warnings.some((warning) => warning.includes("GHSA-1234-5678-9ABC")));
+});

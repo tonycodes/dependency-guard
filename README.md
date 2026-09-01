@@ -104,6 +104,7 @@ runner without placing them in the policy or report.
   },
   "allowDirectLifecycleScripts": {},
   "archiveSizeExceptions": {},
+  "auditExceptions": {},
   "sourceEvidenceExceptions": {},
   "trustedRepositories": {
     "example-package": "https://github.com/example/example-package"
@@ -123,6 +124,7 @@ runner without placing them in the policy or report.
   whose registry manifest declares `preinstall`, `install`, or `postinstall`.
 - `archiveSizeExceptions` permits exact package versions to use reviewed archive
   limits above the project defaults.
+- `auditExceptions` permits only listed GHSA advisories until each entry's expiry.
 - `sourceEvidenceExceptions` permits only an exact package version to proceed when
   source provenance or tag evidence is unavailable. Each entry requires a detailed
   `reason` and an `expiresAt` ISO date, and produces a warning.
